@@ -1,12 +1,13 @@
 <launch>
 
-	<arg name="tracker_name" default="tracker" />
+	<arg name="tracker_name" default="camera" />
 	<arg name="camera_frame" default="camera_frame"/>
 
 	<node pkg="skeleton_tracker" type="xtion_tracker" name="skeleton_tracker" output="screen">
 		<param name="tf_prefix" value="$(arg tracker_name)" />
     	<param name="relative_frame" value="/$(arg tracker_name)_depth_frame" />
     	<param name="camera_frame" type="string" value="/$(arg camera_frame)"/>
+        <remap from="/camera/point_cloud" to="/camera/depth_registered/points"/>
 	</node>
 	<!-- TF Static Transforms to World -->
     <node pkg="tf" type="static_transform_publisher" name="top_plate_to_tracker" 

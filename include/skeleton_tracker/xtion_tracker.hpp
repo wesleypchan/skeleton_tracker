@@ -73,6 +73,16 @@ public:
       it_(nh_)
   {
 
+
+    // Initialize arrays. This is need for hydro as it doesn't not support C++11,
+    // so the array values cannot be initialize at declaration.  
+    for (int i=0; i<MAX_USERS; ++i)
+    {
+        g_visibleUsers_[i]=false;
+        g_skeletonStates_[i]=nite::SKELETON_NONE;
+    }
+
+      
     // Get some parameters from the server
     ros::NodeHandle pnh("~");
     if (!pnh.getParam("tf_prefix", tf_prefix_))
@@ -128,7 +138,7 @@ public:
                  depthMode_.getResolutionY(), depthMode_.getFps(), depthMode_.getPixelFormat());
       }
 
-      depthStream_.setMirroringEnabled(false);
+      depthStream_.setMirroringEnabled(true);
     }
     else
     {
@@ -160,7 +170,7 @@ public:
       {
         devDevice_.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
       }
-      vsColorStream_.setMirroringEnabled(true);
+      vsColorStream_.setMirroringEnabled(false);
     }
     else
     {
@@ -194,7 +204,8 @@ public:
     userPub_ = nh_.advertise<skeleton_tracker::user_IDs>("/people", 1);
 
     // Initialize both the Camera Info publishers
-    depthInfoPub_ = nh_.advertise<sensor_msgs::CameraInfo>("/camera/depth/camera_info", 1);
+    // depthInfoPub_ = nh_.advertise<sensor_msgs::CameraInfo>("/camera/depth/camera_info", 1);
+    depthInfoPub_ = nh_.advertise<sensor_msgs::CameraInfo>("/camera/depth_registered/camera_info", 1);
 
     rgbInfoPub_ = nh_.advertise<sensor_msgs::CameraInfo>("/camera/rgb/camera_info", 1);
 
@@ -556,8 +567,10 @@ private:
   /// ROS NodeHandle
   ros::NodeHandle nh_;
 
-  bool g_visibleUsers_[MAX_USERS] = {false};
-  nite::SkeletonState g_skeletonStates_[MAX_USERS] = {nite::SKELETON_NONE};
+  // bool g_visibleUsers_[MAX_USERS] = {false};
+  // nite::SkeletonState g_skeletonStates_[MAX_USERS] = {nite::SKELETON_NONE};
+  bool g_visibleUsers_[MAX_USERS];
+  nite::SkeletonState g_skeletonStates_[MAX_USERS];
 
   /// Image transport
   image_transport::ImageTransport it_;
