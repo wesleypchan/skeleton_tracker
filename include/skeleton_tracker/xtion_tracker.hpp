@@ -454,18 +454,51 @@ private:
       transform.setRotation(tf::Quaternion(0, 0, 0, 1));
       std::stringstream frame_id_stream;
       std::string frame_id;
-      frame_id_stream << "/" << tf_prefix_ << "/user_" << uid << "/" << j_name;
+      // frame_id_stream << "/" << tf_prefix_ << "/user_" << uid << "/" << j_name;
+      frame_id_stream << "/" << j_name << "_" << uid;
       frame_id = frame_id_stream.str();
       tfBroadcast_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), relative_frame_, frame_id));
     }
     return;
   }
 
+
+  /**
+   * Publish the joints over the TF stream
+   * Used for publishing the frames of the first existing skeleton with frame names
+   * that don't have an unknown user id following it.
+   * @param j_name: joint name
+   * @param j: the joint
+   * @param uid: user's ID
+   */
+  void publishJointTF(std::string j_name, nite::SkeletonJoint j)
+  {
+
+    if (j.getPositionConfidence() > 0.0)
+    {
+      tf::Transform transform;
+      transform.setOrigin(
+          tf::Vector3(j.getPosition().x / 1000.0, j.getPosition().y / 1000.0, j.getPosition().z / 1000.0));
+      transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+      std::stringstream frame_id_stream;
+      std::string frame_id;
+      // frame_id_stream << "/" << tf_prefix_ << "/user_" << uid << "/" << j_name;
+      frame_id_stream << "/" << j_name;
+      frame_id = frame_id_stream.str();
+      tfBroadcast_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), relative_frame_, frame_id));
+    }
+    return;
+  }
+
+    
   /**
    * Get the skeleton's joints and the users IDs
    */
   void getSkeleton()
   {
+
+    bool has_published_one_skeleton = false;
+      
     skeleton_tracker::user_IDs ids;
     niteRc_ = userTracker_.readFrame(&userTrackerFrame_);
     if (niteRc_ != nite::STATUS_OK)
@@ -509,7 +542,10 @@ private:
         for (JointMap::iterator it = named_joints.begin(); it != named_joints.end(); ++it)
         {
           publishJointTF(it->first, it->second, user.getId());
+          if (!has_published_one_skeleton)
+              publishJointTF(it->first, it->second);
         }
+        has_published_one_skeleton = true;
         // Add the user's ID
         ids.users.push_back(int(user.getId()));
       }
